@@ -4,7 +4,7 @@ import java.util.List;
 import java.io.FileWriter;
 import java.io.IOException;
 
-//SRP - is achieved by using Abstraction, Inheritance and polymorphism(overriding).
+//SRP and OCP - are achieved by using Abstraction, Inheritance and polymorphism(overriding).
 //OCP - is followed. For new feature we don't need to modify the existing ones.
 //LSP - is followed.
 //ISP - is followed.
