@@ -126,7 +126,7 @@ interface Observer {
     fun update(message: String)
 }
 
-class User(val id: String, val name: String) : Observer {
+class User(val id: String, val name: String, email: String) : Observer {
     private val expenses: MutableList<Expense> = mutableListOf()
 
     //// userId -> amount (positive = they owe you, negative = you owe them)
@@ -170,27 +170,21 @@ class User(val id: String, val name: String) : Observer {
 
     companion object {
         private var nextUserId = 0
-        fun createUser(id: String, name: String): User {
-            return User(id = "user_" + nextUserId++, name)
+        fun createUser( name: String, email: String): User {
+            return User(id = "user_" + nextUserId++, name, email)
         }
     }
 }
 
-class Group(val id: String, val groupName: String, val members: List<User>) {
-    private val observers: MutableList<Observer> = mutableListOf()
+class Group(val id: String, val groupName: String, val members: MutableList<User>) {
+    //<expenseId, Expense>
     private val groupExpenses: MutableMap<String, Expense> = mutableMapOf()
+
+    //<useId, <otherUserId, amount>>
     private var groupBalances: MutableMap<String, MutableMap<String, Double>> = mutableMapOf()
 
-
-    init {
-        for (member in members) {
-            registerObserver(member)
-        }
-    }
-
     fun addMember(user: User) {
-        members.toMutableList().add(user)
-        registerObserver(user)
+        members.add(user)
         // Initialize balance map for new member
         groupBalances[user.id] = mutableMapOf()
         println("User ${user.name} added to group $groupName")
@@ -201,22 +195,13 @@ class Group(val id: String, val groupName: String, val members: List<User>) {
             println("User ${user.name} cannot be removed from group $groupName due to unsettled balances")
             return false
         }
-        members.toMutableList().remove(user)
-        removeObserver(user)
+        members.remove(user)
         println("User ${user.name} removed from group $groupName")
         return true
     }
 
-    fun registerObserver(observer: Observer) {
-        observers.add(observer)
-    }
-
-    fun removeObserver(observer: Observer) {
-        observers.remove(observer)
-    }
-
-    fun notifyAllObservers(message: String) {
-        for (observer in observers) {
+    private fun notifyAllObservers(message: String) {
+        for (observer in members) {
             observer.update(message)
         }
     }
@@ -405,7 +390,7 @@ class Group(val id: String, val groupName: String, val members: List<User>) {
         println("""=== Group Balances for $groupName ===""")
         val df: DecimalFormat = DecimalFormat("#.##")
         for ((memberId, userBalances) in groupBalances) {
-            val memberName = getUserByUserId(memberId)!!.name
+            val memberName = getUserByUserId(memberId)?.name
             println("$memberName's balances in group:")
 
             if (userBalances.isEmpty()) {
@@ -437,7 +422,7 @@ class Group(val id: String, val groupName: String, val members: List<User>) {
 
     companion object {
         private var nextGroupId = 0
-        fun createGroup(groupName: String, members: List<User>): Group {
+        fun createGroup(groupName: String, members: MutableList<User>): Group {
             val groupId = "group_" + nextGroupId++
             return Group(id = groupId, groupName = groupName, members = members)
         }

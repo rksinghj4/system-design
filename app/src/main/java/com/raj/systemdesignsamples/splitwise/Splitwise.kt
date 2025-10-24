@@ -4,7 +4,7 @@ import java.text.DecimalFormat
 import kotlin.math.abs
 
 
-// Main ExpenseManager class (Singleton - Facade)
+// Main ExpenseManager class (Singleton - Act as a Facade)
 class Splitwise private constructor() {
     private val users: MutableMap<String, User> =
         HashMap()
@@ -14,7 +14,7 @@ class Splitwise private constructor() {
 
     // User management
     fun createUser(name: String, email: String?): User {
-        val user = User(
+        val user = User.createUser(
             name,
             email!!
         )
@@ -184,5 +184,73 @@ class Splitwise private constructor() {
     companion object {
         //Singleton instance
         val instance: Splitwise by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { Splitwise() }
+    }
+}
+
+object SplitwiseApp {
+    @JvmStatic
+    fun main(args: Array<String>) {
+        val splitwiseManager: Splitwise = Splitwise.instance
+
+        println("\n=========== Creating Users ====================")
+        val user1 = splitwiseManager.createUser("Raj", "raj@gmail.com")
+        val user2 = splitwiseManager.createUser("Manoj", "manoj@gmail.com")
+        val user3 = splitwiseManager.createUser("Pradeep", "pradeep@gmail.com")
+        val user4 = splitwiseManager.createUser("Gavendra", "gavendra@gmail.com")
+
+        println("\n=========== Creating Group and Adding Members ====================")
+        val hostelGroup = splitwiseManager.createGroup("Hostel Expenses")
+        splitwiseManager.addUserToGroup(user1.id, hostelGroup.id)
+        splitwiseManager.addUserToGroup(user2.id, hostelGroup.id)
+        splitwiseManager.addUserToGroup(user3.id, hostelGroup.id)
+        splitwiseManager.addUserToGroup(user4.id, hostelGroup.id)
+
+        println("\n=========== Adding Expenses in group ====================")
+        val groupMembers = listOf(user1.id, user2.id, user3.id, user4.id)
+        splitwiseManager.addExpenseToGroup(
+            hostelGroup.id,
+            "Lunch",
+            800.0,
+            user1.id,
+            groupMembers,
+            SplitType.EQUAL
+        )
+
+        val dinnerMembers = listOf(user1.id, user3.id, user4.id)
+        val dinnerAmounts: List<Double> = mutableListOf(200.0, 300.0, 200.0)
+        splitwiseManager.addExpenseToGroup(
+            hostelGroup.id, "Dinner", 700.0, user3.id, dinnerMembers,
+            SplitType.EXACT, dinnerAmounts
+        )
+
+        println("\n=========== printing Group-Specific Balances ====================")
+        splitwiseManager.showGroupBalances(hostelGroup.id)
+
+        println("\n=========== Debt Simplification ====================")
+        splitwiseManager.simplifyGroupDebts(hostelGroup.id)
+
+        println("\n=========== printing Group-Specific Balances ====================")
+        splitwiseManager.showGroupBalances(hostelGroup.id)
+
+        println("\n=========== Adding Individual Expense ====================")
+        splitwiseManager.addIndividualExpense("Coffee", 40.0, user2.id, user4.id, SplitType.EQUAL)
+
+        println("\n=========== printing User Balances ====================")
+        splitwiseManager.showUserBalance(user1.id)
+        splitwiseManager.showUserBalance(user2.id)
+        splitwiseManager.showUserBalance(user3.id)
+        splitwiseManager.showUserBalance(user4.id)
+
+        println("\n==========Attempting to remove Rohit from group==========")
+        splitwiseManager.removeUserFromGroup(user2.id, hostelGroup.id)
+
+        println("\n======== Making Settlement to Clear Rohit's Debt ==========")
+        splitwiseManager.settlePaymentInGroup(hostelGroup.id, user2.id, user3.id, 200.0)
+
+        println("\n======== Attempting to Remove Rohit Again ==========")
+        splitwiseManager.removeUserFromGroup(user2.id, hostelGroup.id)
+
+        println("\n=========== Updated Group Balances ====================")
+        splitwiseManager.showGroupBalances(hostelGroup.id)
     }
 }
